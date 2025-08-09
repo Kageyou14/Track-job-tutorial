@@ -6,16 +6,23 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# サンプルのデータフレーム（本来はセッションなどから取得）
-papers = pd.DataFrame([
-    {"title": "論文A", 
-     "authors": "著者1, 著者2", 
-     "journal": "雑誌A", 
-     "year": 2021, 
-     "doi": "10.1234/abcd", 
-     "url": "https://example.com/abcd",
-     "memo":""}
+# 仮データの
+if "papers" not in st.session_state:
+    st.session_state.papers = pd.DataFrame([
+        {"title": "論文A", 
+         "authors": "著者1, 著者2", 
+         "journal": "雑誌A", 
+         "year": 2021, 
+         "doi": "10.1234/abcd", 
+         "url": "https://example.com/abcd",
+         "memo": ""}
     ])
+papers = st.session_state.papers
+
+# edit_mode の初期化（辞書）
+if "edit_mode" not in st.session_state:
+    st.session_state.edit_mode = {}
+
 
 for idx, paper in papers.iterrows():
     st.write(f"#### {paper['title']}")
@@ -25,12 +32,16 @@ for idx, paper in papers.iterrows():
     st.write(f"**DOI:** {paper['doi']}")
     st.markdown(f"**URL:** [{paper['url']}]({paper['url']})")
     
-    # メモ入力欄（キーにidxを使う）
+
+if st.session_state.edit_mode.get(idx, False):
     memo_input = st.text_area("メモを入力してください", value=paper["memo"], key=f"memo_{idx}")
-
-    if st.button("メモを保存", key=f"save_{idx}"):
-        # セッションのデータフレームを更新
+    if st.button("保存", key=f"save_{idx}"):
+        # メモを保存して編集モードを終了
         st.session_state.papers.at[idx, "memo"] = memo_input
-        st.success("メモを保存しました")
-
-    st.write("---")
+        st.session_state.edit_mode[idx] = False
+        st.experimental_rerun()  # ページをリロードして状態更新を反映
+else:
+    st.write(f"**メモ:** {paper['memo']}")
+    if st.button("編集", key=f"edit_{idx}"):
+        st.session_state.edit_mode[idx] = True
+        st.experimental_rerun()  # ページをリロードして編集モードに切替
