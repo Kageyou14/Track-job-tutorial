@@ -7,7 +7,6 @@ st.title("論文管理ツール")
 if "papers" not in st.session_state:
     st.session_state.papers = pd.DataFrame(columns=["title", "authors", "journal", "year", "doi", "url"])
 
-
 #テキスト入力欄
 doi=st.text_input("DOIを入力してください")
 
@@ -29,7 +28,7 @@ if st.button("論文を追加する"):
             [st.session_state.papers, pd.DataFrame([paper_info])],
             ignore_index=True
         )
-        st.success("追加完了")
+        st.success("追加完了")  
     else:
         st.warning("DOIを入力してください")
           
