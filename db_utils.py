@@ -7,8 +7,6 @@ def init_db():
     """データベースを初期化し、テーブルが存在しない場合は作成する"""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    # 論文情報を保存するテーブルを作成
-    # IF NOT EXISTS をつけることで、既に存在する場合にエラーになるのを防ぐ
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS papers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +14,9 @@ def init_db():
         authors TEXT,
         journal TEXT,
         year INTEGER,
+        volume TEXT,   -- 追加
+        issue TEXT,    -- 追加
+        pages TEXT,    -- 追加
         doi TEXT NOT NULL UNIQUE,
         url TEXT
     )
@@ -27,15 +28,19 @@ def add_paper(paper_info: dict):
     """論文情報をデータベースに追加する"""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
+    # INSERT文に新しいカラムを追加
     cursor.execute(
-        "INSERT INTO papers (title, authors, journal, year, doi, url) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO papers (title, authors, journal, year, volume, issue, pages, doi, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
-            paper_info["title"],
-            paper_info["authors"],
-            paper_info["journal"],
-            paper_info["year"],
-            paper_info["doi"],
-            paper_info["url"],
+            paper_info.get("title"),
+            paper_info.get("authors"),
+            paper_info.get("journal"),
+            paper_info.get("year"),
+            paper_info.get("volume"),  
+            paper_info.get("issue"),   
+            paper_info.get("pages"),   
+            paper_info.get("doi"),
+            paper_info.get("url"),
         )
     )
     conn.commit()
