@@ -1,5 +1,7 @@
 import streamlit as st
 import db_utils
+from streamlit_quill import st_quill
+import base64
 
 st.set_page_config(layout="wide") 
 
@@ -29,7 +31,7 @@ if paper is None:
     st.error("指定された論文が見つかりませんでした。")
     st.stop()
 st.title("論文詳細・メモ編集")
-st.markdown("[論文一覧に戻る](/)")
+st.markdown('<a href="/" target="_self">論文一覧に戻る</a>', unsafe_allow_html=True)
 st.divider()
 
 st.subheader(paper['title'])
@@ -81,7 +83,16 @@ if "edit_mode" not in st.session_state:
 
 # 編集モードの場合
 if st.session_state.edit_mode:
-    memo_input = st.text_area("メモ内容", value=paper["memo"], height=200)
+    memo_input = st_quill(
+        value=paper["memo"],       # データベースの値を初期値として設定
+        html=True,                 # HTMLモードを有効化
+        toolbar=[                  # ツールバーのオプションを指定
+            ['bold', 'italic', 'underline'],
+            [{'color': []}, {'background': []}],
+            ['clean']
+        ],
+        key="quill_editor"
+    )
     
     col1, col2 = st.columns(2)
     with col1:
@@ -99,14 +110,86 @@ if st.session_state.edit_mode:
 else:
     # メモが空の場合はメッセージを表示
     if paper["memo"]:
-        st.write(paper["memo"])
+        st.markdown(paper["memo"], unsafe_allow_html=True)
     else:
         st.info("この論文にはまだメモがありません。")
 
     if st.button("編集する"):
         st.session_state.edit_mode = True
         st.rerun()
-# # edit_mode の初期化（辞書）
+file_type = paper.get('file_type')
+file_data = paper.get('file_data')
+
+if file_type and file_data and isinstance(file_data, bytes):
+    # ファイルの種類に応じて表示方法を切り替え
+    if 'image' in file_type:
+        st.write("**現在登録されている画像**")
+        st.image(file_data, width=400)
+    elif 'pdf' in file_type:
+        st.write("**現在登録されているPDF**")
+        # 埋め込み表示
+        base64_pdf = base64.b64encode(file_data).decode('utf-8')
+        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
+        st.markdown(pdf_display, unsafe_allow_html=True)
+    
+    # 登録済みファイルを削除するボタン
+    if st.button("添付ファイルを削除", type="secondary"):
+        db_utils.delete_file(paper_id)
+        st.toast("ファイルを削除しました。", icon="🗑️")
+        st.rerun()
+
+# else:
+#     st.info("この論文にはまだファイルが添付されていません。")
+
+st.write("---")
+
+# 2. 新しいファイルをアップロードする機能
+with st.form("file_upload_form", clear_on_submit=True):
+    # 複数のファイルタイプを許可
+    uploaded_file = st.file_uploader(
+        "新しいファイルをアップロード（既存のファイルは上書きされます）", 
+        type=["png", "jpg", "jpeg", "pdf"]
+    )
+    submitted = st.form_submit_button("このファイルをアップロードする")
+
+if submitted and uploaded_file is not None:
+    # アップロードされたファイルからバイナリデータとファイルタイプを取得
+    file_bytes_to_save = uploaded_file.getvalue()
+    file_type_to_save = uploaded_file.type # Streamlitが自動でMIMEタイプを判別してくれる
+    
+    # 統一された関数でDBを更新
+    db_utils.update_file(paper_id, file_bytes_to_save, file_type_to_save)
+    st.toast("ファイルを保存しました！", icon="📁")
+    st.rerun()
+# if paper['image'] and isinstance(paper['image'], bytes):
+#     st.write("**現在登録されている画像**")
+#     # 変更点1: 表示幅を400ピクセルに制限
+#     st.image(paper['image'], width=400) 
+# else:
+#     st.info("この論文にはまだ画像が登録されていません。")
+
+# st.write("---")
+
+
+# with st.form("image_upload_form", clear_on_submit=True):
+#     uploaded_file = st.file_uploader(
+#         "新しい画像をアップロード（既存の画像は上書きされます）", 
+#         type=["png", "jpg", "jpeg"]
+#     )
+#     submitted = st.form_submit_button("この画像をアップロードする")
+
+# # フォームが送信され、かつファイルがアップロードされている場合
+# if submitted and uploaded_file is not None:
+#     # アップロードされた画像ファイルからバイナリデータを取得
+#     image_bytes = uploaded_file.getvalue()
+    
+#     # データベースを更新
+#     db_utils.update_image(paper_id, image_bytes)
+#     st.toast("画像を保存しました！", icon="🖼️")
+    
+#     # ページを再読み込みして、保存された画像を表示し、フォームをリセットする
+#     st.rerun()
+# # # edit_mode の初期化（辞書）
 # if "edit_mode" not in st.session_state:
 #     st.session_state.edit_mode = {}
 
