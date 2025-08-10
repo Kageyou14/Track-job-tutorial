@@ -48,7 +48,6 @@ with st.sidebar.form(key="add_form"):
                             "pages": data["pages"],    
                             "doi": data["doi"],
                             "url": data["url"],
-                            "memo": ""
                         }
                         
                         # データフレームに追加 
@@ -102,8 +101,8 @@ else:
         with col1:
             # Markdownのリンク構文: [表示テキスト](URL)
             st.markdown(
-                f" [{paper['title']}](details?id={int(paper['id'])})",
-                unsafe_allow_html=True # リンクを有効にするために必要
+                f'<a href="details?id={int(paper["id"])}" target="_self"> {paper["title"]}</a>',
+                unsafe_allow_html=True
             )
 
         
