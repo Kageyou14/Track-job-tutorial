@@ -80,3 +80,11 @@ def update_memo(paper_id: int, memo: str):
     cursor.execute("UPDATE papers SET memo = ? WHERE id = ?", (memo, paper_id))
     conn.commit()
     conn.close()
+
+def delete_paper(paper_id: int):
+    """指定されたIDの論文をデータベースから削除する"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM papers WHERE id = ?", (paper_id,))
+    conn.commit()
+    conn.close()
