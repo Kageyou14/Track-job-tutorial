@@ -14,11 +14,12 @@ def init_db():
         authors TEXT,
         journal TEXT,
         year INTEGER,
-        volume TEXT,   -- 追加
-        issue TEXT,    -- 追加
-        pages TEXT,    -- 追加
+        volume TEXT,   
+        issue TEXT,    
+        pages TEXT,
         doi TEXT NOT NULL UNIQUE,
-        url TEXT
+        url TEXT,
+        memo TEXT DEFAULT ''
     )
     """)
     conn.commit()
@@ -30,7 +31,7 @@ def add_paper(paper_info: dict):
     cursor = conn.cursor()
     # INSERT文に新しいカラムを追加
     cursor.execute(
-        "INSERT INTO papers (title, authors, journal, year, volume, issue, pages, doi, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO papers (title, authors, journal, year, volume, issue, pages, doi, url, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             paper_info.get("title"),
             paper_info.get("authors"),
@@ -41,6 +42,7 @@ def add_paper(paper_info: dict):
             paper_info.get("pages"),   
             paper_info.get("doi"),
             paper_info.get("url"),
+            paper_info.get("memo", "")
         )
     )
     conn.commit()
@@ -58,8 +60,23 @@ def check_doi_exists(doi: str) -> bool:
     """指定されたDOIがデータベースに既に存在するかチェックする"""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    # COUNT(*)で条件に合う行の数を数える
     cursor.execute("SELECT COUNT(*) FROM papers WHERE doi = ?", (doi,))
     count = cursor.fetchone()[0]
     conn.close()
     return count > 0
+
+def get_paper_by_id(paper_id: int) -> pd.Series | None:
+    """IDを指定して単一の論文情報を取得する"""
+    conn = sqlite3.connect(DB_NAME)
+    # DataFrameで読み込み、条件に合う最初の行をSeriesとして返す
+    df = pd.read_sql_query(f"SELECT * FROM papers WHERE id = {paper_id}", conn)
+    conn.close()
+    return df.iloc[0] if not df.empty else None
+
+def update_memo(paper_id: int, memo: str):
+    """指定されたIDの論文のメモを更新する"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE papers SET memo = ? WHERE id = ?", (memo, paper_id))
+    conn.commit()
+    conn.close()
