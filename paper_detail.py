@@ -39,9 +39,9 @@ if st.session_state.edit_mode.get(idx, False):
         # メモを保存して編集モードを終了
         st.session_state.papers.at[idx, "memo"] = memo_input
         st.session_state.edit_mode[idx] = False
-        st.experimental_rerun()  # ページをリロードして状態更新を反映
+        st.rerun()  # ページをリロードして状態更新を反映
 else:
     st.write(f"**メモ:** {paper['memo']}")
     if st.button("編集", key=f"edit_{idx}"):
         st.session_state.edit_mode[idx] = True
-        st.experimental_rerun()  # ページをリロードして編集モードに切替
+        st.rerun()  # ページをリロードして編集モードに切替
