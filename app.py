@@ -34,8 +34,12 @@ with st.sidebar.form(key="add_form"):
                             "authors": data["authors"],
                             "journal": data["journal"],
                             "year": data["year"],
+                            "volume": data["volume"],  
+                            "issue": data["issue"],   
+                            "pages": data["pages"],    
                             "doi": data["doi"],
-                            "url": data["url"]
+                            "url": data["url"],
+                            "memo": ""
                         }
                         
                         # データフレームに追加 
@@ -57,19 +61,47 @@ else:
     # 検索バーが空の場合は、すべての論文を表示する
     filtered_papers = all_papers
 
-# 表の表示をリッチにする
-st.dataframe(
-    filtered_papers,
-    # 表示する列の設定
-    column_config={
-        "title": st.column_config.TextColumn("タイトル", width="large"),
-        "authors": st.column_config.ListColumn("著者", width="medium"),
-        "year": st.column_config.NumberColumn("発行年", format="%d"),
-        "url": st.column_config.LinkColumn("URL", display_text="🔗 Link")
-    },
-    # 表示する列の順番を指定 (doiやjournalは非表示に)
-    column_order=("title", "authors", "year", "url"),
-    hide_index=True,
-    use_container_width=True # 横幅いっぱいに表示
-)
+st.divider()
 
+# 1. ヘッダー行を手動で作成
+col_header1, col_header2, col_header3, col_header4 = st.columns([4, 3, 1, 1])
+with col_header1:
+    st.markdown("**タイトル**")
+with col_header2:
+    st.markdown("**著者**")
+with col_header3:
+    st.markdown("**発行年**")
+with col_header4:
+    st.markdown("**論文URL**")
+
+st.divider()
+
+# 2. forループで各論文の行を描画
+if filtered_papers.empty:
+    st.info("表示する論文がありません。")
+else:
+    for index, paper in filtered_papers.iterrows():
+        col1, col2, col3, col4 = st.columns([4, 3, 1, 1])
+        
+        # タイトル自体を詳細ページへのリンクにする
+        with col1:
+            # Markdownのリンク構文: [表示テキスト](URL)
+            st.markdown(
+                f" [{paper['title']}](details?id={int(paper['id'])})",
+                unsafe_allow_html=True # リンクを有効にするために必要
+            )
+
+        
+        # その他の情報を表示
+        with col2:
+            st.write(paper["authors"])
+        with col3:
+            st.write(paper["year"])
+        with col4:
+            if paper["url"]:
+                st.markdown(
+                    f'<a href="{paper["url"]}" target="_blank">🔗 Link</a>', 
+                    unsafe_allow_html=True
+                )
+        
+        st.divider()
