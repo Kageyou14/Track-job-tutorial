@@ -31,8 +31,37 @@ for idx, paper in papers.iterrows():
     st.write(f"**発行年:** {paper['year']}")
     st.write(f"**DOI:** {paper['doi']}")
     st.markdown(f"**URL:** [{paper['url']}]({paper['url']})")
-    
 
+
+df=db_utils.get_all_papers()
+#引用文献フォーマット
+for idx, row in df.iterrows():
+    authors = row.get('authors', '')
+    year = row.get('year', '')
+    title = row.get('title', '')
+    journal = row.get('journal', '')
+    pages = row.get('pages', '')
+    doi = row.get('doi', '')
+    url = row.get('url', '')
+
+    parts = []
+    if authors and str(authors).strip():
+        parts.append(f"{authors}.")
+    if year and str(year).strip():
+        parts.append(f"({year}).")
+    if title and str(title).strip():
+        parts.append(f"{title}.")
+    if journal and str(journal).strip():
+        parts.append(f"{journal}.")
+    if pages and str(pages).strip():
+        parts.append(f"{pages}")
+    if url and str(url).strip():
+        parts.append(f"{url}")
+        
+    citation = " ".join(parts)
+    st.write(f"**引用文献(APA):** {citation}")
+
+#メモ機能
 if st.session_state.edit_mode.get(idx, False):
     memo_input = st.text_area("メモを入力してください", value=paper["memo"], key=f"memo_{idx}")
     if st.button("保存", key=f"save_{idx}"):
