@@ -1,7 +1,22 @@
 import streamlit as st
 import db_utils
 
-st.set_page_config(layout="wide", initial_sidebar_state="collapsed") 
+st.set_page_config(layout="wide") 
+
+st.markdown("""
+    <style>
+        /* サイドバー本体を非表示にする */
+        section[data-testid="stSidebar"] {
+            display: none !important;
+        }
+        /* サイドバーを開くためのヘッダーのボタンを非表示にする */
+        button[title="View big"] {
+            display: none !important;
+        }
+    </style>
+    """, 
+    unsafe_allow_html=True
+)
 try:
     # URLのクエリパラメータ (?id=1 のような部分) を取得
     paper_id = int(st.query_params["id"])
@@ -31,6 +46,32 @@ if paper['pages']:
 st.write(f"**DOI:** {paper['doi']}")
 if paper['url']:
     st.markdown(f"**URL:** [{paper['url']}]({paper['url']})")
+df=db_utils.get_paper_by_id(paper_id)
+#引用文献フォーマット
+authors = df.get('authors', '')
+year = df.get('year', '')
+title = df.get('title', '')
+journal = df.get('journal', '')
+pages = df.get('pages', '')
+doi = df.get('doi', '')
+url = df.get('url', '')
+
+parts = []
+if authors and str(authors).strip():
+    parts.append(f"{authors}.")
+if year and str(year).strip():
+    parts.append(f"({year}).")
+if title and str(title).strip():
+    parts.append(f"{title}.")
+if journal and str(journal).strip():
+    parts.append(f"{journal}.")
+if pages and str(pages).strip():
+    parts.append(f"{pages}")
+if url and str(url).strip():
+    parts.append(f"{url}")
+        
+citation = " ".join(parts)
+st.write(f"**引用文献(APA):** {citation}")
 
 st.divider()
 st.subheader("メモ")
